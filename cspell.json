@@ -1,0 +1,14 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [],
+    "dictionaries": [],
+    "words": [
+        "ascii-casemap",
+        "ascii-numeric",
+        "Fastmail",
+        "JMAP"
+    ],
+    "ignoreWords": [],
+    "import": []
+}
