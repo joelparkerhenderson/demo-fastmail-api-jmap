@@ -291,3 +291,87 @@ c7d72bfa-0c4e-3ad4-0d9d-2aeee366faaf Sent
 76561826-af17-fca9-c96d-764517ebf9e9 Spam
 f74e957b-2c74-1f89-e354-0f9bba0acdea Trash
 ```
+
+## Get the Inbox mailbox by using Mailbox/query
+
+To get a mailbox by name, use the JMAP method call "Mailbox/query" capability then a filter with a name parameter:
+
+JMAP JSON data:
+
+```json
+{
+  "using": [ 
+    "urn:ietf:params:jmap:core", 
+    "urn:ietf:params:jmap:mail" 
+  ],
+  "methodCalls": [
+    [ 
+      "Mailbox/query", 
+      { 
+       "accountId": "$ACCOUNT",
+        "filter": {
+            "name": "Inbox"
+        }
+      }, 
+      "" 
+    ]
+  ]
+}
+```
+
+Complete curl example:
+
+```sh
+curl \
+--header "Content-Type: application/json; charset=utf-8" \
+--header "Authorization: Bearer $TOKEN" \
+--request POST \
+--data "
+{
+    \"using\": [
+        \"urn:ietf:params:jmap:core\", 
+        \"urn:ietf:params:jmap:mail\"
+    ],
+    \"methodCalls\": [[
+        \"Mailbox/query\", 
+        {
+            \"accountId\": \"$ACCOUNT\",
+            \"filter\": {
+                \"name\": \"$name\"
+            }
+        },
+        \"\"
+    ]]
+}" \
+"https://api.fastmail.com/jmap/api/"
+```
+
+Example response that matches three mailboxes:
+
+```json
+{
+  "methodResponses": [
+    [
+      "Mailbox/query",
+      {
+        "accountId": "u0000000",
+        "ids": [
+          "83616aa1-e433-bc13-2227-9400cb39f7ab",
+          "3ee25744-47d2-06b3-de9d-f1e973612d66",
+          "013cdf48-e6b0-2e79-dca9-baf70407ce40"
+        ],
+        "queryState": "000000",
+        "total": 3,
+        "filter": {
+          "name": "Inbox"
+        },
+        "position": 0,
+        "canCalculateChanges": true
+      },
+      ""
+    ]
+  ],
+  "sessionState": "cyrus-0;p-ca43e86d48;s-6735173d254d20c1",
+  "latestClientVersion": ""
+}
+```
