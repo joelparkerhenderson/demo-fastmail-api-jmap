@@ -1,7 +1,8 @@
 # Demo Fastmail API JMAP
 
-Demonstration of Fastmail.com API for JMAP, which is a JSON protocol for email accesss.
+Demonstration of Fastmail.com Application Programming Interface (API) for JSON Meta Application Protocol Specification (JMAP)
 
+* JMAP specification: [https://jmap.io/spec-core.html](https://jmap.io/spec-core.html)
 
 ## Generate a Fastmail API security token
 
@@ -17,24 +18,26 @@ Example result:
 fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e16747
 ```
 
-For convenience, you can export it to your shell:
+For convenience, you can export the API token to your shell:
 
 ```sh
 export TOKEN="fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e16747
 "
 ```
 
-## Connect via curl
+## Use curl to get a session account id
 
-The typical Fastmail API URL is:
+The typical Fastmail API JMAP session URL is:
 
 * [https://api.fastmail.com/jmap/session](https://api.fastmail.com/jmap/session)
 
-Verifiy you can connect via curl and your token:
+Verify you can connect via curl and your token:
 
 ```sh
-curl "https://api.fastmail.com/jmap/session" \
- -H "Authorization: Bearer $TOKEN"
+curl --silent \
+  --header "Content-Type: application/json; charset=utf-8" \
+  --header "Authorization: Bearer $TOKEN" \
+  "https://api.fastmail.com/jmap/session"
 ```
 
 The output is JSON and looks like this:
@@ -99,4 +102,140 @@ The output is JSON and looks like this:
   },
   "apiUrl": "https://api.fastmail.com/jmap/api/",
   "username": "example@fastmail.com"
+```
+
+Look carefully at the "accounts" item, which lists your account id, which may start with the letter "u" for user then 8 hexadecimal lowercase digits, such as:
+
+```json
+  "accounts": {
+    "u00000000": {
+```      
+
+For convenience, you can export the account id to your shell, such as:
+
+```sh
+export ACCOUNT=u00000000
+```
+
+Many of the Fastmail API JMAP methods will need the account id parameter.
+
+
+## What is a typical JMAP request?
+
+A typical JMAP request uses these two HTTP headers:
+
+```txt
+Content-Type: application/json; charset=utf-8
+Authorization: Bearer …
+```
+
+## JMAP using list
+
+A JMAP request specifies what URN capabilities it is using, such as:
+
+Example syntax:
+
+```json
+"using": [ 
+  "urn:ietf:params:<group1>:<part1>"
+  "urn:ietf:params:<group2>:<part2>"
+]
+```
+
+Example real-world JMAP excerpt:
+
+```json
+"using": [ 
+  "urn:ietf:params:jmap:core", 
+  "urn:ietf:params:jmap:mail"
+]
+```
+
+## JMAP method call
+
+A JMAP method call uses a tuple:
+
+* A String name of the method to call or of the response.
+
+* A String[*] object containing named arguments for that method or response.
+  
+* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. For simple needs, we prefer using a blank string. For production needs, we prefer using a ZID (i.e. 32 lowercase secure random hex digits) or UUID-4.
+
+Example syntax:
+
+```json
+[
+  "Type1/method1", 
+  { 
+    "arg1": "data1", 
+    "arg2": "data2"
+  }, 
+  "arbitrary method call id" 
+]
+```
+
+Example real-world JMAP excerpt:
+
+```json
+[
+  "Mailbox/get", 
+  {
+    "accountId": "u5c18414e"
+  },
+  ""
+]
+```
+
+
+## JMAP request example
+
+A JMAP request combines the "using" list above, and the method calls.
+
+Example syntax:
+
+```json
+{
+  "using": [ 
+    "urn:ietf:params:group1:part1", 
+    "urn:ietf:params:group2:part2" 
+  ],
+  "methodCalls": [
+    [ 
+      "Type1/method1", 
+      { 
+        "arg1": "data1", 
+        "arg2": "data2" 
+      }, 
+      "arbitrary method call id 1" 
+    ],
+    [ 
+      "Type2/method2", 
+      { 
+        "arg3": "data3", 
+        "arg4": "data4" 
+      }, 
+      "arbitrary method call id 2" 
+    ]
+  ]
+}
+```
+
+Example real-world JMAP complete request JSON:
+
+```json
+{
+  "using": [ 
+    "urn:ietf:params:jmap:core", 
+    "urn:ietf:params:jmap:mail" 
+  ],
+  "methodCalls": [
+    [ 
+      "Mailbox/get", 
+      { 
+       "accountId": "u00000000"
+      }, 
+      "" 
+    ]
+  ]
+}
 ```
