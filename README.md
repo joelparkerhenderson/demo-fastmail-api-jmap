@@ -122,107 +122,12 @@ Many of the Fastmail API JMAP methods will need the account id parameter.
 
 ## What is a typical JMAP request?
 
-A typical JMAP request uses these two HTTP headers:
+A simple JMAP request looks like this:
 
 ```txt
 Content-Type: application/json; charset=utf-8
 Authorization: Bearer …
-```
 
-## JMAP using list
-
-A JMAP request specifies what URN capabilities it is using, such as:
-
-Example syntax:
-
-```json
-"using": [ 
-  "urn:ietf:params:<group1>:<part1>"
-  "urn:ietf:params:<group2>:<part2>"
-]
-```
-
-Example real-world JMAP excerpt:
-
-```json
-"using": [ 
-  "urn:ietf:params:jmap:core", 
-  "urn:ietf:params:jmap:mail"
-]
-```
-
-## JMAP method call
-
-A JMAP method call uses a tuple:
-
-* A String name of the method to call or of the response.
-
-* A String[*] object containing named arguments for that method or response.
-  
-* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. For simple needs, we prefer using a blank string. For production needs, we prefer using a ZID (i.e. 32 lowercase secure random hex digits) or UUID-4.
-
-Example syntax:
-
-```json
-[
-  "Type1/method1", 
-  { 
-    "arg1": "data1", 
-    "arg2": "data2"
-  }, 
-  "arbitrary method call id" 
-]
-```
-
-Example real-world JMAP excerpt:
-
-```json
-[
-  "Mailbox/get", 
-  {
-    "accountId": "u5c18414e"
-  },
-  ""
-]
-```
-
-
-## JMAP request example
-
-A JMAP request combines the "using" list above, and the method calls.
-
-Example syntax:
-
-```json
-{
-  "using": [ 
-    "urn:ietf:params:group1:part1", 
-    "urn:ietf:params:group2:part2" 
-  ],
-  "methodCalls": [
-    [ 
-      "Type1/method1", 
-      { 
-        "arg1": "data1", 
-        "arg2": "data2" 
-      }, 
-      "arbitrary method call id 1" 
-    ],
-    [ 
-      "Type2/method2", 
-      { 
-        "arg3": "data3", 
-        "arg4": "data4" 
-      }, 
-      "arbitrary method call id 2" 
-    ]
-  ]
-}
-```
-
-Example real-world JMAP complete request JSON:
-
-```json
 {
   "using": [ 
     "urn:ietf:params:jmap:core", 
@@ -238,4 +143,120 @@ Example real-world JMAP complete request JSON:
     ]
   ]
 }
+```
+
+The request is explained in more detail in the next few sections below.
+
+
+## JMAP HTTP headers
+
+A simple JMAP request uses HTTP headers such as:
+
+```txt
+Content-Type: application/json; charset=utf-8
+Authorization: Bearer f8621aaabd847d2c5e948d8869b5b628
+```
+
+
+## JMAP "using" list
+
+A JMAP request specifies what URN parameter capabilities it is using, such as:
+
+```json
+"using": [ 
+  "urn:ietf:params:jmap:core", 
+  "urn:ietf:params:jmap:mail"
+]
+```
+
+
+## JMAP method call
+
+A JMAP method call uses a tuple:
+
+* A String name of the method to call or of the response.
+
+* A String[*] object containing named arguments for that method or response.
+  
+* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. For simple needs, we prefer using a blank string. For production needs, we prefer using a ZID (i.e. hexadecimal lowercase secure random 32-character string) or UUID-4.
+
+Example:
+
+```json
+[
+  "Mailbox/get", 
+  {
+    "accountId": "u5c18414e"
+  },
+  ""
+]
+```
+
+Example with more args and an arbitrary method call id:
+
+```json
+[
+  "Resource1/method1", 
+  { 
+    "arg1": "value1", 
+    "arg2": "value2"
+  }, 
+  "b602822814f46a6013c7f0dce6fa028f" 
+]
+```
+
+
+## Use curl JMAP JSON data to get the mailbox list
+
+Combine the JMAP JSON "using" section and a JMAP JSON "methodCalls" section, to give you this complete JMAP JSON data to request the account's mailbox list:
+
+HTTP headers:
+
+```txt
+Content-Type: application/json; charset=utf-8
+Authorization: Bearer $TOKEN
+```
+
+JMAP JSON data:
+
+```json
+{
+  "using": [ 
+    "urn:ietf:params:jmap:core", 
+    "urn:ietf:params:jmap:mail" 
+  ],
+  "methodCalls": [
+    [ 
+      "Mailbox/get", 
+      { 
+       "accountId": "$ACCOUNT"
+      }, 
+      "" 
+    ]
+  ]
+}
+```
+
+Complete curl example:
+
+```sh
+curl \
+--header "Content-Type: application/json; charset=utf-8" \
+--header "Authorization: Bearer $TOKEN" \
+--request POST \
+--data "
+{
+    \"using\": [
+        \"urn:ietf:params:jmap:core\", 
+        \"urn:ietf:params:jmap:mail\"
+    ],
+    \"methodCalls\": [[
+        \"Mailbox/get\", 
+        {
+            \"accountId\": \"$ACCOUNT\"
+        },
+        \"\"
+    ]]
+}" \
+"https://api.fastmail.com/jmap/api/"
 ```
