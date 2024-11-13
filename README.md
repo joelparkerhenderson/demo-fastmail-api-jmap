@@ -148,7 +148,7 @@ Authorization: Bearer …
 The request is explained in more detail in the next few sections below.
 
 
-## JMAP HTTP headers
+## Provide JMAP HTTP headers
 
 A simple JMAP request uses HTTP headers such as:
 
@@ -158,7 +158,7 @@ Authorization: Bearer f8621aaabd847d2c5e948d8869b5b628
 ```
 
 
-## JMAP "using" list
+## Format a JMAP "using" list
 
 A JMAP request specifies what URN parameter capabilities it is using, such as:
 
@@ -170,7 +170,7 @@ A JMAP request specifies what URN parameter capabilities it is using, such as:
 ```
 
 
-## JMAP method call
+## Create a JMAP method call
 
 A JMAP method call uses a tuple:
 
@@ -206,7 +206,7 @@ Example with more args and an arbitrary method call id:
 ```
 
 
-## Use curl JMAP JSON data to get the mailbox list
+## Get the mailbox list by using curl
 
 Combine the JMAP JSON "using" section and a JMAP JSON "methodCalls" section, to give you this complete JMAP JSON data to request the account's mailbox list:
 
@@ -259,4 +259,35 @@ curl \
     ]]
 }" \
 "https://api.fastmail.com/jmap/api/"
+```
+
+
+## Parse the mailbox list by using jq
+
+If you want to parse the mailbox list JSON, here's an example:
+
+```sh
+get-mailbox-list |
+jq -r ".methodResponses.[0].[1].list | .[] | [.id, .name] | @tsv"
+```
+
+What the command does:
+
+* Use command `jq` to parse the JMAP JSON response.
+
+* Select the inner array that is the mailbox list.
+
+* For each mailbox, get its id and name.
+
+* Print the id and name as tab separated values.
+
+Example output:
+
+```tsv
+8c543068-9a50-30bf-8cbb-f77ae411f743 Inbox
+3edd8e81-a814-947c-4e22-4c4e9c0b30b1 Archive
+98a10f38-82c9-8b3a-75f5-085915113509 Drafts
+c7d72bfa-0c4e-3ad4-0d9d-2aeee366faaf Sent
+76561826-af17-fca9-c96d-764517ebf9e9 Spam
+f74e957b-2c74-1f89-e354-0f9bba0acdea Trash
 ```
