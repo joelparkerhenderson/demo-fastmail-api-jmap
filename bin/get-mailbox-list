@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# Get the user's mailboxes.
+#
+# # JMAP Specification
+#
+# https://www.rfc-editor.org/rfc/rfc8621.html
+#
+# ## 2. Mailboxes
+#
+# A Mailbox represents a named set of Email objects.  This is the
+# primary mechanism for organising messages within an account.  It is
+# analogous to a folder or a label in other systems.  A Mailbox may
+# perform a certain role in the system; see below for more details.
+#
+# For compatibility with IMAP, an Email MUST belong to one or more
+# Mailboxes.  The Email id does not change if the Email changes
+# Mailboxes.
+#
+# A *Mailbox* object has the following properties:
+#
+#   * id: "Id" (immutable; server-set).
+#
+#     The id of the Mailbox.
+#
+#   * name: "String"
+#
+#     User-visible name for the Mailbox, e.g., "Inbox".  This MUST be a
+#     Net-Unicode string [RFC5198] of at least 1 character in length,
+#     subject to the maximum size given in the capability object.  There
+#     MUST NOT be two sibling Mailboxes with both the same parent and
+#     the same name.  Servers MAY reject names that violate server
+#     policy (e.g., names containing a slash (/) or control characters).
+#
+#  * etc.
+#
+#  The following JMAP methods are supported.
+#
+# ## 2.1.  Mailbox/get
+#
+# This is a standard "/get" method as described in [RFC8620],
+# Section 5.1.  The "ids" argument may be "null" to fetch all at once.
+#
+set -euf
+. "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
+command_exists_or_die curl
+var_exists_or_die TOKEN
+var_exists_or_die ACCOUNT
+
+curl \
+--header "Content-Type: application/json; charset=utf-8" \
+--header "Authorization: Bearer $TOKEN" \
+--request POST \
+--data "
+{
+    \"using\": [
+        \"urn:ietf:params:jmap:core\", 
+        \"urn:ietf:params:jmap:mail\"
+    ],
+    \"methodCalls\": [[
+        \"Mailbox/get\", 
+        {
+            \"accountId\": \"$ACCOUNT\"
+        },
+        \"\"
+    ]]
+}" \
+"https://api.fastmail.com/jmap/api/"
