@@ -42,14 +42,14 @@ curl \
 --data '
 {
     "using": [
-        "urn:ietf:params:jmap:core", 
+        "urn:ietf:params:jmap:core",
         "urn:ietf:params:jmap:mail",
         "urn:ietf:params:jmap:submission"
     ],
     "methodCalls": [
         [
             "Email/set", {
-                "accountId": "'"$account_id"'", 
+                "accountId": "'"$account_id"'",
                 "create": {
                     "draft": {
                         "from": [{
@@ -77,7 +77,7 @@ curl \
                         }
                     }
                 }
-            }, 
+            },
             "0"
         ],
         [

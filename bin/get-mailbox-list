@@ -2,6 +2,10 @@
 #
 # Get the user's mailbox list.
 #
+# Syntax:
+#
+#    get-mailbox-list <token> <account_id>
+#
 # # JMAP Specification
 #
 # https://www.rfc-editor.org/rfc/rfc8621.html
@@ -44,25 +48,30 @@
 set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
 command_exists_or_die curl
-var_exists_or_die TOKEN
-var_exists_or_die ACCOUNT
+
+if [ "$#" -ne 2 ]; then
+    die "$EXIT_USAGE" "Usage: get-mailbox-list <token> <account_id>"
+fi
+
+token="$1"
+account_id="$2"
 
 curl \
---header "Content-Type: application/json; charset=utf-8" \
---header "Authorization: Bearer $TOKEN" \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
 --request POST \
---data "
+--data '
 {
-    \"using\": [
-        \"urn:ietf:params:jmap:core\", 
-        \"urn:ietf:params:jmap:mail\"
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail"
     ],
-    \"methodCalls\": [[
-        \"Mailbox/get\", 
-        {
-            \"accountId\": \"$ACCOUNT\"
+    "methodCalls": [[
+        "Mailbox/get", {
+            "accountId": "'"$account_id"'"
         },
-        \"\"
+        ""
     ]]
-}" \
-"https://api.fastmail.com/jmap/api/"
+}' \
+'https://api.fastmail.com/jmap/api/'

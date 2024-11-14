@@ -2,10 +2,15 @@
 set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
 command_exists_or_die curl
-var_exists_or_die TOKEN
+
+if [ "$#" -ne 1 ]; then
+    die "$EXIT_USAGE" "Usage: get-session <token>"
+fi
+
+token="$1"
 
 curl \
---header "Content-Type: application/json; charset=utf-8" \
---header "Accept: application/json" \
---header "Authorization: Bearer $TOKEN" \
-"https://api.fastmail.com/jmap/session"
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
+'https://api.fastmail.com/jmap/session'

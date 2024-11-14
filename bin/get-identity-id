@@ -8,6 +8,10 @@ set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
 command_exists_or_die curl
 
+if [ "$#" -ne 2 ]; then
+    die "$EXIT_USAGE" "Usage: get-mailbox-list <token> <account_id>"
+fi
+
 token="$1"
 account_id="$2"
 
@@ -23,7 +27,7 @@ curl \
         "urn:ietf:params:jmap:submission"
     ],
     "methodCalls": [[
-        "Identity/get", { 
+        "Identity/get", {
             "accountId": "'"$account_id"'"
         },
         ""

@@ -2,35 +2,48 @@
 #
 # Get the user's mailbox by name.
 #
-# The default name is "Inbox".
+#    get-mailbox-by_name <token> <account_id> <mailbox_name>
+#
+# Typical mailbox names:
+#
+#   * Inbox
+#   * Archive
+#   * Drafts
+#   * Sent
+#   * Spam
+#   * Trash
 #
 set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
 command_exists_or_die curl
-var_exists_or_die TOKEN
-var_exists_or_die ACCOUNT
 
-name="${1:-Inbox}"
+if [ "$#" -ne 3 ]; then
+    die "$EXIT_USAGE" "Usage: get-mailbox-list <token> <account_id> <mailbox_name>"
+fi
+
+token="$1"
+account_id="$2"
+mailbox_name="$3"
 
 curl \
---header "Content-Type: application/json; charset=utf-8" \
---header "Authorization: Bearer $TOKEN" \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
 --request POST \
---data "
+--data '
 {
-    \"using\": [
-        \"urn:ietf:params:jmap:core\", 
-        \"urn:ietf:params:jmap:mail\"
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail"
     ],
-    \"methodCalls\": [[
-        \"Mailbox/query\", 
-        {
-            \"accountId\": \"$ACCOUNT\",
-            \"filter\": {
-                \"name\": \"$name\"
+    "methodCalls": [[
+        "Mailbox/query", {
+            "accountId": "'"$account_id"'",
+            "filter": {
+                "name": "'"$mailbox_name"'"
             }
         },
-        \"\"
+        ""
     ]]
-}" \
-"https://api.fastmail.com/jmap/api/"
+}' \
+'https://api.fastmail.com/jmap/api/'
