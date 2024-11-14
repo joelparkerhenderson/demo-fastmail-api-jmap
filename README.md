@@ -4,6 +4,7 @@ Demonstration of Fastmail.com Application Programming Interface (API) for JSON M
 
 * JMAP specification: [https://jmap.io/spec-core.html](https://jmap.io/spec-core.html)
 
+
 ## Generate a Fastmail API security token
 
 * [https://app.fastmail.com/settings/security/tokens/new](https://app.fastmail.com/settings/security/tokens/new)
@@ -21,26 +22,25 @@ fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e1674
 For convenience, you can export the API token to your shell:
 
 ```sh
-export TOKEN="fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e16747
-"
+export token="fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e16747"
 ```
 
-## Use curl to get a session account id
+## Use curl to get your session account id
 
 The typical Fastmail API JMAP session URL is:
 
 * [https://api.fastmail.com/jmap/session](https://api.fastmail.com/jmap/session)
 
-Verify you can connect via curl and your token:
+Run:
 
 ```sh
 curl --silent \
   --header "Content-Type: application/json; charset=utf-8" \
-  --header "Authorization: Bearer $TOKEN" \
-  "https://api.fastmail.com/jmap/session"
+  --header "Authorization: Bearer '"$token" \
+  'https://api.fastmail.com/jmap/session'
 ```
 
-The output is JSON and looks like this:
+The output is JSON, such as:
 
 ```json
 {
@@ -100,21 +100,24 @@ The output is JSON and looks like this:
       "isPersonal": true
     }
   },
-  "apiUrl": "https://api.fastmail.com/jmap/api/",
+  "apiUrl": 'https://api.fastmail.com/jmap/api/',
   "username": "example@fastmail.com"
 ```
 
-Look carefully at the "accounts" item, which lists your account id, which may start with the letter "u" for user then 8 hexadecimal lowercase digits, such as:
+Look carefully at the "accounts" item, which lists your accounts. Each account item starts with an account id, which may start with the letter "u" (meaning user) then 8 hexadecimal lowercase digits, such as:
 
 ```json
-  "accounts": {
-    "u00000000": {
-```      
+"accounts": {
+  "u00000000": {
+    …
+  }
+}
+```
 
 For convenience, you can export the account id to your shell, such as:
 
 ```sh
-export ACCOUNT=u00000000
+export account_id="u00000000"
 ```
 
 Many of the Fastmail API JMAP methods will need the account id parameter.
@@ -129,17 +132,17 @@ Content-Type: application/json; charset=utf-8
 Authorization: Bearer …
 
 {
-  "using": [ 
-    "urn:ietf:params:jmap:core", 
-    "urn:ietf:params:jmap:mail" 
+  "using": [
+    "urn:ietf:params:jmap:core",
+    "urn:ietf:params:jmap:mail"
   ],
   "methodCalls": [
-    [ 
-      "Mailbox/get", 
-      { 
+    [
+      "Mailbox/get",
+      {
        "accountId": "u00000000"
-      }, 
-      "" 
+      },
+      ""
     ]
   ]
 }
@@ -154,7 +157,7 @@ A simple JMAP request uses HTTP headers such as:
 
 ```txt
 Content-Type: application/json; charset=utf-8
-Authorization: Bearer f8621aaabd847d2c5e948d8869b5b628
+Authorization: Bearer fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e16747
 ```
 
 
@@ -163,8 +166,8 @@ Authorization: Bearer f8621aaabd847d2c5e948d8869b5b628
 A JMAP request specifies what URN parameter capabilities it is using, such as:
 
 ```json
-"using": [ 
-  "urn:ietf:params:jmap:core", 
+"using": [
+  "urn:ietf:params:jmap:core",
   "urn:ietf:params:jmap:mail"
 ]
 ```
@@ -177,36 +180,139 @@ A JMAP method call uses a tuple:
 * A String name of the method to call or of the response.
 
 * A String[*] object containing named arguments for that method or response.
-  
-* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. For simple needs, we prefer using a blank string. For production needs, we prefer using a ZID (i.e. hexadecimal lowercase secure random 32-character string) or UUID-4.
+
+* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. For simple needs, we prefer using a blank string. For production needs, we prefer using a ZID (i.e. hexadecimal lowercase secure random 32-character string) or UUID-4 to make the response have a unique identifier.
 
 Example:
 
 ```json
 [
-  "Mailbox/get", 
+  "Identity/get",
   {
-    "accountId": "u5c18414e"
+    "accountId": "u00000000"
   },
   ""
 ]
 ```
 
-Example with more args and an arbitrary method call id:
+
+## Get your identity by using Identity/get
+
+Get your identity list by using curl with JMAP HTTP headers (explained above) and JMAP JSON data:
+
+```sh
+curl \
+--header "Content-Type: application/json; charset=utf-8" \
+--header "Accept: application/json" \
+--header "Authorization: Bearer $token" \
+--request POST \
+--data '
+{
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:submission"
+    ],
+    "methodCalls": [[
+        "Identity/get", {
+            "accountId": "'"$account_id"'"
+        },
+        ""
+    ]]
+}' \
+'https://api.fastmail.com/jmap/api/'
+```
+
+The output is JSON, such as:
 
 ```json
-[
-  "Resource1/method1", 
-  { 
-    "arg1": "value1", 
-    "arg2": "value2"
-  }, 
-  "b602822814f46a6013c7f0dce6fa028f" 
-]
+{
+  "latestClientVersion": "",
+  "sessionState": "cyrus-0;p-6e2e3bf4ae;s-67362d7d426ad71b",
+  "methodResponses": [
+    [
+      "Identity/get",
+      {
+        "list": [
+          {
+            "id": "00000000",
+            "email": "alice.adams@example.com",
+            "mayDelete": true,
+            "displayName": "j@jph",
+            "verificationCheckTime": "2021-06-09T23:09:41Z",
+            "addBccOnSMTP": false,
+            "replyTo": null,
+            "name": "Alice Adams",
+            "showInCompose": true,
+            "server": "",
+            "verificationState": "autoverified",
+            "externalCredentialId": null,
+            "bcc": null,
+            "saveOnSMTP": false,
+            "ssl": "starttls",
+            "htmlSignature": "",
+            "useForAutoReply": false,
+            "enableExternalSMTP": false,
+            "saveSentToMailboxId": "d12b886e-a5c0-20fa-9f16-081d8788b05b",
+            "warnings": [],
+            "isAutoConfigured": false,
+            "textSignature": "",
+            "port": 587
+          }
+        ],
+        "accountId": "u00000000",
+        "notFound": [],
+        "state": ""
+      },
+      ""
+    ]
+  ]
+}
+```
+
+The "list" item is an array of identities. It's possible to have multiple identities. Each identity has an "id" property.
+
+For convenience, you can export your identity id to your shell, such as:
+
+```sh
+export identity_id="00000000"
+```
+
+Some of the Fastmail API JMAP methods will need the identity id parameter.
+
+
+## Parse the identity list by using jq
+
+
+
+## Parse the mailbox list by using jq
+
+If you want to parse the mailbox list JSON, here's an example:
+
+```sh
+get-mailbox-list |
+jq -r ".methodResponses.[0].[1].list | .[] | [.id, .email] | @tsv"
+```
+
+What the command does:
+
+* Use command `jq` to parse the JMAP JSON response.
+
+* Select the inner array that is the identity list.
+
+* For each identity, get its id and email address.
+
+* Print the id and email as tab separated values.
+
+Example output for a user who has 3 identities:
+
+```tsv
+00000000 alice.adams@example.com
+00000001 alice@example.com
+00000002 adams@example.com
 ```
 
 
-## Get the mailbox list by using curl
+## Get your mailbox list by using Mailbox/get
 
 Combine the JMAP JSON "using" section and a JMAP JSON "methodCalls" section, to give you this complete JMAP JSON data to request the account's mailbox list:
 
@@ -214,51 +320,51 @@ HTTP headers:
 
 ```txt
 Content-Type: application/json; charset=utf-8
-Authorization: Bearer $TOKEN
+Authorization: Bearer $token
 ```
 
 JMAP JSON data:
 
 ```json
 {
-  "using": [ 
-    "urn:ietf:params:jmap:core", 
-    "urn:ietf:params:jmap:mail" 
+  "using": [
+    "urn:ietf:params:jmap:core",
+    "urn:ietf:params:jmap:mail"
   ],
   "methodCalls": [
-    [ 
-      "Mailbox/get", 
-      { 
-       "accountId": "$ACCOUNT"
-      }, 
-      "" 
+    [
+      "Mailbox/get",
+      {
+       "accountId": "'"$account_id"'"
+      },
+      ""
     ]
   ]
 }
 ```
 
-Complete curl example:
+Run:
 
 ```sh
 curl \
 --header "Content-Type: application/json; charset=utf-8" \
---header "Authorization: Bearer $TOKEN" \
+--header "Authorization: Bearer '"$token" \
 --request POST \
---data "
+--data '
 {
-    \"using\": [
-        \"urn:ietf:params:jmap:core\", 
-        \"urn:ietf:params:jmap:mail\"
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail"
     ],
-    \"methodCalls\": [[
-        \"Mailbox/get\", 
+    "methodCalls": [[
+        "Mailbox/get",
         {
-            \"accountId\": \"$ACCOUNT\"
+            "accountId": "'"$account_id"'"
         },
-        \"\"
+        ""
     ]]
 }" \
-"https://api.fastmail.com/jmap/api/"
+'https://api.fastmail.com/jmap/api/'
 ```
 
 
@@ -292,6 +398,7 @@ c7d72bfa-0c4e-3ad4-0d9d-2aeee366faaf Sent
 f74e957b-2c74-1f89-e354-0f9bba0acdea Trash
 ```
 
+
 ## Get the Inbox mailbox by using Mailbox/query
 
 To get a mailbox by name, use the JMAP method call "Mailbox/query" capability then a filter with a name parameter:
@@ -300,50 +407,50 @@ JMAP JSON data:
 
 ```json
 {
-  "using": [ 
-    "urn:ietf:params:jmap:core", 
-    "urn:ietf:params:jmap:mail" 
+  "using": [
+    "urn:ietf:params:jmap:core",
+    "urn:ietf:params:jmap:mail"
   ],
   "methodCalls": [
-    [ 
-      "Mailbox/query", 
-      { 
-       "accountId": "$ACCOUNT",
+    [
+      "Mailbox/query",
+      {
+       "accountId": "'"$account_id"'",
         "filter": {
             "name": "Inbox"
         }
-      }, 
-      "" 
+      },
+      ""
     ]
   ]
 }
 ```
 
-Complete curl example:
+Run:
 
 ```sh
 curl \
 --header "Content-Type: application/json; charset=utf-8" \
---header "Authorization: Bearer $TOKEN" \
+--header "Authorization: Bearer '"$token" \
 --request POST \
---data "
+--data '
 {
-    \"using\": [
-        \"urn:ietf:params:jmap:core\", 
-        \"urn:ietf:params:jmap:mail\"
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail"
     ],
-    \"methodCalls\": [[
-        \"Mailbox/query\", 
+    "methodCalls": [[
+        "Mailbox/query",
         {
-            \"accountId\": \"$ACCOUNT\",
-            \"filter\": {
-                \"name\": \"$name\"
+            "accountId": "'"$account_id"'",
+            "filter": {
+                "name": "$name"
             }
         },
-        \"\"
+        ""
     ]]
 }" \
-"https://api.fastmail.com/jmap/api/"
+'https://api.fastmail.com/jmap/api/'
 ```
 
 Example response that matches three mailboxes:
