@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# Get the account identity id.
+#
+#    get-identity-id <token> <account_id>
+#
+set -euf
+. "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
+command_exists_or_die curl
+
+token="$1"
+account_id="$2"
+
+curl \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
+--request POST \
+--data '
+{
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:submission"
+    ],
+    "methodCalls": [[
+        "Identity/get", { 
+            "accountId": "'"$account_id"'"
+        },
+        ""
+    ]]
+}' \
+'https://api.fastmail.com/jmap/api/'
