@@ -25,7 +25,13 @@ For convenience, you can export the API token to your shell:
 export token="fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc53968fdb1e358e16747"
 ```
 
+
 ## Use curl to get your session account id
+
+Source code:
+
+* [bin/get-session](bin/get-session)
+
 
 The typical Fastmail API JMAP session URL is:
 
@@ -100,13 +106,13 @@ The output is JSON, such as:
       "isPersonal": true
     }
   },
-  "apiUrl": 'https://api.fastmail.com/jmap/api/',
+  "apiUrl": "https://api.fastmail.com/jmap/api/",
   "username": "example@fastmail.com"
 ```
 
 Look carefully at the "accounts" item, which lists your accounts. Each account item starts with an account id, which may start with the letter "u" (meaning user) then 8 hexadecimal lowercase digits, such as:
 
-```json
+```txt
 "accounts": {
   "u00000000": {
     …
@@ -181,11 +187,10 @@ A JMAP method call uses a tuple:
 
 * A String[*] object containing named arguments for that method or response.
 
-* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. For simple needs, we prefer using a blank string. For production needs, we prefer using a ZID (i.e. hexadecimal lowercase secure random 32-character string) or UUID-4 to make the response have a unique identifier.
-
+* A String method call id, which is an arbitrary string from the client to be echoed back with the responses emitted by that method call. 
 Example:
 
-```json
+```txt
 [
   "Identity/get",
   {
@@ -195,8 +200,20 @@ Example:
 ]
 ```
 
+The method call id is because a method may return 1 or more responses, because a method may make implicit calls to other methods; all responses initiated by this method call get the same method call id in the response. 
+
+* If the request has one method call, then we prefer the method call id to be a blank string, because this helps make it clear that the method call id doesn't matter.
+  
+* If the request has multiple method calls, then we prefer the method call id to be the method call index number, such as "0", "1", "2", etc.
+
+* If the request is for an important system, such as a multi-threaded application, or a production mail service, then we prefer the method call id to be a totally unique id. We prefer using a ZID i.e. hexadecimal 32-character lowercase secure random string, or using a UUID-4.
+
 
 ## Get your identity by using Identity/get
+
+Source code:
+
+* [bin/get-identity-list](bin/get-identity-list)
 
 Get your identity list by using curl with JMAP HTTP headers (explained above) and JMAP JSON data:
 
@@ -282,11 +299,7 @@ Some of the Fastmail API JMAP methods will need the identity id parameter.
 
 ## Parse the identity list by using jq
 
-
-
-## Parse the mailbox list by using jq
-
-If you want to parse the mailbox list JSON, here's an example:
+If you want to parse the identity list JSON, here's an example:
 
 ```sh
 get-mailbox-list |
@@ -314,6 +327,10 @@ Example output for a user who has 3 identities:
 
 ## Get your mailbox list by using Mailbox/get
 
+Source code:
+
+* [bin/get-mailbox-list](bin/get-mailbox-list)
+
 Combine the JMAP JSON "using" section and a JMAP JSON "methodCalls" section, to give you this complete JMAP JSON data to request the account's mailbox list:
 
 HTTP headers:
@@ -335,7 +352,7 @@ JMAP JSON data:
     [
       "Mailbox/get",
       {
-       "accountId": "'"$account_id"'"
+       "accountId": "u00000000"
       },
       ""
     ]
@@ -348,6 +365,7 @@ Run:
 ```sh
 curl \
 --header "Content-Type: application/json; charset=utf-8" \
+--header "Accept: application/json" \
 --header "Authorization: Bearer '"$token" \
 --request POST \
 --data '
@@ -401,11 +419,15 @@ f74e957b-2c74-1f89-e354-0f9bba0acdea Trash
 
 ## Get the Inbox mailbox by using Mailbox/query
 
+Source code:
+
+* [bin/get-mailbox-by-name](bin/get-mailbox-by-name)
+
 To get a mailbox by name, use the JMAP method call "Mailbox/query" capability then a filter with a name parameter:
 
 JMAP JSON data:
 
-```json
+```json+shell
 {
   "using": [
     "urn:ietf:params:jmap:core",
@@ -431,6 +453,7 @@ Run:
 ```sh
 curl \
 --header "Content-Type: application/json; charset=utf-8" \
+--header "Accept: application/json" \
 --header "Authorization: Bearer '"$token" \
 --request POST \
 --data '
@@ -480,5 +503,158 @@ Example response that matches three mailboxes:
   ],
   "sessionState": "cyrus-0;p-ca43e86d48;s-6735173d254d20c1",
   "latestClientVersion": ""
+}
+```
+
+
+## Send email using Email/set then EmailSubmission/set
+
+Source code:
+
+* [bin/send-email](bin/send-email)
+
+The Fastmail API JMAP requires each email to be created as a draft, then sent.
+
+Steps:
+
+1. Use Email/set to create an email in our drafts folder.
+
+2. Use EmailSubmission/set to send the email.
+
+Run:
+
+```sh
+curl \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
+--request POST \
+--data '
+{
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail",
+        "urn:ietf:params:jmap:submission"
+    ],
+    "methodCalls": [
+        [
+            "Email/set", {
+                "accountId": "'"$account_id"'",
+                "create": {
+                    "draft": {
+                        "from": [{
+                            "email": "'"$from_email"'"
+                        }],
+                        "to": [{
+                            "email": "'"$to_email"'"
+                        }],
+                        "subject": "'"$subject"'",
+                        "mailboxIds": {
+                            "'"$mailbox_id"'": true
+                        },
+                        "keywords": {
+                            "$draft": true
+                        },
+                        "textBody": [{
+                            "partId": "body",
+                            "type": "text/plain"
+                        }],
+                        "bodyValues": {
+                            "body": {
+                                "charset": "utf-8",
+                                "value": "'"$body_value"'"
+                            }
+                        }
+                    }
+                }
+            },
+            "0"
+        ],
+        [
+            "EmailSubmission/set", {
+                "accountId": "'"$account_id"'",
+                "onSuccessDestroyEmail": ["#sendIt"],
+                "create": {
+                    "sendIt": {
+                        "emailId": "#draft",
+                        "identityId": "'"$identity_id"'"
+                    }
+                }
+            },
+            "1"
+        ]
+    ]
+}' \
+'https://api.fastmail.com/jmap/api/'
+```
+
+The output is JSON, such as:
+
+```json
+{
+    "methodResponses": [
+        [
+            "Email/set",
+            {
+                "accountId": "u00000000",
+                "notUpdated": null,
+                "destroyed": null,
+                "updated": null,
+                "created": {
+                    "draft": {
+                        "id": "Me4672cc07651aaf91ab4cee6",
+                        "blobId": "Ge4672cc07651aaf91ab4cee6f275cea0d26ce481",
+                        "threadId": "T7594f5217d38a1eb",
+                        "size": 285
+                    }
+                },
+                "notDestroyed": null,
+                "oldState": "1102978",
+                "newState": "1102980",
+                "notCreated": null
+            },
+            "0"
+        ],
+        [
+            "EmailSubmission/set",
+            {
+                "oldState": "1102956",
+                "newState": "1102981",
+                "notCreated": null,
+                "accountId": "u00000000",
+                "notDestroyed": null,
+                "destroyed": null,
+                "notUpdated": null,
+                "created": {
+                    "sendIt": {
+                        "undoStatus": "final",
+                        "id": "S3650",
+                        "sendAt": "2024-11-14T19:14:25Z"
+                    }
+                },
+                "updated": null
+            },
+            "1"
+        ],
+        [
+            "Email/set",
+            {
+                "notCreated": null,
+                "oldState": "1102980",
+                "newState": "1102982",
+                "created": null,
+                "updated": null,
+                "notUpdated": null,
+                "destroyed": [
+                    "Me4672cc07651aaf91ab4cee6"
+                ],
+                "notDestroyed": null,
+                "accountId": "u00000000"
+            },
+            "1"
+        ]
+    ],
+    "sessionState": "cyrus-0;p-6ead906769;s-67364bcfd71fd239",
+    "latestClientVersion": ""
 }
 ```

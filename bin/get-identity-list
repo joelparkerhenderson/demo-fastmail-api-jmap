@@ -1,8 +1,12 @@
 #!/bin/sh
 #
-# Get the account identity id.
+# Get the account's identity list.
 #
 #    get-identity-id <token> <account_id>
+#
+# # JMAP Specification
+#
+# https://www.rfc-editor.org/rfc/rfc8621.html
 #
 set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"

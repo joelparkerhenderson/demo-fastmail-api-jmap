@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Send mail via the user's JMAP mail.
+# Send email via the user's JMAP mail.
 #
 # Syntax:
 #
@@ -8,15 +8,14 @@
 #
 # This script makes two calls in a single request:
 #
-#   1. Email/set to set our draft in our drafts folder.
+#   1. Email/set to create an email in our drafts folder.
 #
-#   2. EmailSubmission/set to send the mail.
+#   2. EmailSubmission/set to send the email.
 #
 # # JMAP Specification
 #
 # https://www.rfc-editor.org/rfc/rfc8621.html
 #
-
 set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
 command_exists_or_die curl

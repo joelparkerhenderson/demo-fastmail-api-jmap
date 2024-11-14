@@ -1,4 +1,11 @@
 #!/bin/sh
+#
+# Get a Fastmail API JMAP session.
+#
+# # JMAP Specification
+#
+# https://www.rfc-editor.org/rfc/rfc8621.html
+#
 set -euf
 . "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
 command_exists_or_die curl
