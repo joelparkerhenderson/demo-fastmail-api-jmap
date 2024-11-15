@@ -1,8 +1,18 @@
 # Demo Fastmail API JMAP
 
-Demonstration of Fastmail.com Application Programming Interface (API) for JSON Meta Application Protocol Specification (JMAP)
+Demonstration of the Fastmail.com Application Programming Interface (API) for JSON Meta Application Protocol Specification (JMAP).
+
+* Fastmail.com: [https://www.fastmail.com/](https://www.fastmail.com/)
 
 * JMAP specification: [https://jmap.io/spec-core.html](https://jmap.io/spec-core.html)
+
+This demo may also help JMAP developers with all other JMAP services:
+
+* Mailtemi: [https://mailtemi.com/](https://mailtemi.com/). Mailtemi provides a unified inbox, and works JMAP and other protocols.
+
+* Stalwart: [https://stalw.art/](https://stalw.art/). Stalwart provides an all-in-one email server focusing on security, flexibility, and scalability.
+
+Special thanks to the Fastmail staff and Mailtemi staff for their ongoing advice to improve this demo.
 
 
 ## Generate a Fastmail API security token
@@ -31,7 +41,6 @@ export token="fmu1-7c178287-1216c9163795fbefa9702c67571fcc32-0-172da3367b9fc5396
 Source code:
 
 * [bin/get-session](bin/get-session)
-
 
 The typical Fastmail API JMAP session URL is:
 
@@ -110,7 +119,7 @@ The output is JSON, such as:
   "username": "example@fastmail.com"
 ```
 
-Look carefully at the "accounts" item, which lists your accounts. Each account item starts with an account id, which may start with the letter "u" (meaning user) then 8 hexadecimal lowercase digits, such as:
+Look carefully at the "accounts" item, which is JSON hash of the account items. Each account item key is the account id:
 
 ```txt
 "accounts": {
@@ -120,13 +129,23 @@ Look carefully at the "accounts" item, which lists your accounts. Each account i
 }
 ```
 
+The account id above is u00000000. This demo will use that account id in our examples.
+
+Various JMAP companies  use different account id formats:
+
+* Fastmail account ids start with "u" for user, then have 8 hexadecimal lowercase digits.
+  
+* Stalw.art IDs are much shorter, like "bla1" or "3bla."
+
+* Apache James uses full GUIDs.
+
 For convenience, you can export the account id to your shell, such as:
 
 ```sh
 export account_id="u00000000"
 ```
 
-Many of the Fastmail API JMAP methods will need the account id parameter.
+Many of JMAP methods need the account id parameter.
 
 
 ## What is a typical JMAP request?
@@ -215,6 +234,8 @@ Source code:
 
 * [bin/get-identity-list](bin/get-identity-list)
 
+Before we begin, be aware that various JMAP providers may return different results for Identity/get. For example, early versions of Stalw.art returned empty Identity/get results, leaving it up to the email client to create them.
+  
 Get your identity list by using curl with JMAP HTTP headers (explained above) and JMAP JSON data:
 
 ```sh
@@ -658,3 +679,10 @@ The output is JSON, such as:
     "latestClientVersion": ""
 }
 ```
+
+## TODO
+
+Add demo of initial synchronization (to demonstrate how JMAP works).
+
+Add resynchronization of a mailbox with many changes (to showcase JMAP’s strengths).
+
