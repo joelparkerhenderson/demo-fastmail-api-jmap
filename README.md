@@ -682,7 +682,24 @@ The output is JSON, such as:
 
 ## TODO
 
-Add demo of initial synchronization (to demonstrate how JMAP works).
+Integrate expert advice:
 
-Add resynchronization of a mailbox with many changes (to showcase JMAP’s strengths).
+* You show Mailbox/query using the "name" filter; this filter is sometimes surprising. First, it looks for mailboxes whose name *contains* a string. So, searching for "Laughter" will find "Slaughter". Careful!
+
+* Mailbox/query's name filter also looks at the leaf name. If you have a "New" folder under each of three other folders, you'll find three "New" folders searching for "New". It may not be clear what's happening to novices.
+
+* The most likely uses of Mailbox/query in the sort of story you're setting up are probably best served by filtering by *role*. Just getting all hasAnyRole mailboxes, or just the sent and draft mailboxes, would go a long way.
+
+* In the bit that does Email/set and EmailSubmission/set, you have it create the mailbox with a `$mailbox_id` but don't explain it. Probably they want to create this in the drafts mailbox.
+
+* Also in that section, you have onSuccessDestroyEmail. I get it, you copied from the `hello-world` example in JMAP-Samples, but… I think this is a much worse experience than the somewhat more complex thing to do: create the email in Drafts, and replace onSuccessDestroyEmail with a onSuccessUpdateEmail clause that (a) removes the $draft keyword and (b) moves the messages from the Drafts mailbox to the Send mailbox.
+
+Add demos:
+
+* Initial synchronization (to show how JMAP starts working).
+
+* Resynchronization of a mailbox with many changes (to showcase JMAP’s strengths).
+
+* Send email with an attachment (that's not a trivial addition, but also not *that* hard).
+
 
