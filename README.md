@@ -1,6 +1,10 @@
+<!--
+  tags: #demo #fastmail #api #jmap #json #curl #email #smtp
+-->
+
 # Demo Fastmail API JMAP
 
-Demonstration of the Fastmail.com Application Programming Interface (API) for JSON Meta Application Protocol Specification (JMAP).
+Demonstration of the Fastmail.com Application Programming Interface (API) for JSON Meta Application Protocol Specification (JMAP). Learn how to use Fastmail, JMAP, JSON, curl, and shell scripts to create emails and send emails. 
 
 * Fastmail.com: [https://www.fastmail.com/](https://www.fastmail.com/)
 
