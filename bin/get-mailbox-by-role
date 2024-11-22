@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# Get the user's mailbox by role.
+#
+#    get-mailbox-by_role <token> <account_id> <mailbox_role>
+#
+# Typical mailbox roles:
+#
+#   * inbox
+#   * archive
+#   * drafts
+#   * sent
+#   * spam
+#   * trash
+#
+# # JMAP Specification
+#
+# https://www.rfc-editor.org/rfc/rfc8621.html
+#
+#
+set -euf
+. "$(dirname "$(readlink -f "$0")")/unix-shell-script-kit"
+command_exists_or_die curl
+
+if [ "$#" -ne 3 ]; then
+    die "$EXIT_USAGE" "Usage: get-mailbox-by-role <token> <account_id> <mailbox_role>"
+fi
+
+token="$1"
+account_id="$2"
+mailbox_role="$3"
+
+curl \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
+--request POST \
+--data '
+{
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail"
+    ],
+    "methodCalls": [[
+        "Mailbox/query", {
+            "accountId": "'"$account_id"'",
+            "filter": {
+                "role": "'"$mailbox_role"'"
+            }
+        },
+        ""
+    ]]
+}' \
+'https://api.fastmail.com/jmap/api/'
