@@ -669,7 +669,10 @@ export drafts_mailbox_id="b7fed054-e6c3-4a94-ae63-74c02f4142d7"
 ```
 
 
-## JMAP keywords
+## JMAP terminology we need to know to send email
+
+
+### JMAP keywords
 
 The JMAP spec defines a set of mailbox keywords that are reserved:
 
@@ -684,7 +687,38 @@ This is set when the user wants to treat the message as a draft the user is comp
 
 This is the JMAP equivalent of the IMAP \Draft flag.
 
-The "$draft" keyword is used to send email, as described in the next section.
+The "$draft" keyword is used to send email.
+
+
+### JMAP references to previous method results
+
+The JMAP specification says:
+
+<blockquote>
+
+To allow clients to make more efficient use of the network and avoid round
+trips, an argument to one method can be taken from the result of a previous
+method call in the same request.
+
+To do this, the client prefixes the argument name with # (an octothorpe). The
+value is a ResultReference object as described below. When processing a method
+call, the server MUST first check the arguments object for any names beginning
+with #. If found, the result reference should be resolved and the value used as
+the “real” argument. The method is then processed as normal. If any result
+reference fails to resolve, the whole method MUST be rejected with an
+invalidResultReference error. If an arguments object contains the same argument
+name in normal and referenced form (e.g., foo and #foo), the method MUST return
+an invalidArguments error.
+
+A ResultReference object has the following properties:
+
+* resultOf: String The method call id (see Section 3.1.1) of a previous method call in the current request.
+
+* name: String The required name of a response to that method call.
+
+* path: String A pointer into the arguments of the response selected via the name and resultOf properties. This is a JSON Pointer [@!RFC6901], except it also allows the use of * to map through an array (see the description below).
+
+</blockquote>
 
 
 ## Send email using Email/set then EmailSubmission/set
