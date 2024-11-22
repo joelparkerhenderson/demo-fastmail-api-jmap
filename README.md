@@ -54,8 +54,8 @@ Run:
 
 ```sh
 curl --silent \
-  --header "Content-Type: application/json; charset=utf-8" \
-  --header "Authorization: Bearer '"$token" \
+  --header 'Content-Type: application/json; charset=utf-8' \
+  --header 'Authorization: Bearer '"$token" \
   'https://api.fastmail.com/jmap/session'
 ```
 
@@ -244,9 +244,9 @@ Get your identity list by using curl with JMAP HTTP headers (explained above) an
 
 ```sh
 curl \
---header "Content-Type: application/json; charset=utf-8" \
---header "Accept: application/json" \
---header "Authorization: Bearer $token" \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer $token" \
 --request POST \
 --data '
 {
@@ -389,9 +389,9 @@ Run:
 
 ```sh
 curl \
---header "Content-Type: application/json; charset=utf-8" \
---header "Accept: application/json" \
---header "Authorization: Bearer '"$token" \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
 --request POST \
 --data '
 {
@@ -406,7 +406,7 @@ curl \
         },
         ""
     ]]
-}" \
+}' \
 'https://api.fastmail.com/jmap/api/'
 ```
 
@@ -442,7 +442,7 @@ f74e957b-2c74-1f89-e354-0f9bba0acdea Trash
 ```
 
 
-## Get the Inbox mailbox by using Mailbox/query
+## Get the inbox mailbox by using Mailbox/query filter name
 
 Source code:
 
@@ -464,7 +464,7 @@ JMAP JSON data:
       {
        "accountId": "'"$account_id"'",
         "filter": {
-            "name": "Inbox"
+            "name": "inbox"
         }
       },
       ""
@@ -477,9 +477,9 @@ Run:
 
 ```sh
 curl \
---header "Content-Type: application/json; charset=utf-8" \
---header "Accept: application/json" \
---header "Authorization: Bearer '"$token" \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
 --request POST \
 --data '
 {
@@ -492,12 +492,12 @@ curl \
         {
             "accountId": "'"$account_id"'",
             "filter": {
-                "name": "$name"
+                "name": "inbox"
             }
         },
         ""
     ]]
-}" \
+}' \
 'https://api.fastmail.com/jmap/api/'
 ```
 
@@ -518,7 +518,7 @@ Example response that matches three mailboxes:
         "queryState": "000000",
         "total": 3,
         "filter": {
-          "name": "Inbox"
+          "name": "inbox"
         },
         "position": 0,
         "canCalculateChanges": true
@@ -530,6 +530,161 @@ Example response that matches three mailboxes:
   "latestClientVersion": ""
 }
 ```
+
+
+## Get the drafts mailbox by using Mailbox/query filter role
+
+When we search for a mailbox by name, we might get spurious answers:
+
+* JMAP allows a mailbox to have a name that is arbitrary. This means the user's inbox could actually be named "New" or "Hello" or "Todo" etc. 
+
+* JMAP allows query filter name to do a partial match. This means the filter name "inbox" could actually match "tinbox" or "inbox2" or "pinboxen" etc.
+
+Each user typically has some special mailboxes:
+
+* inbox
+
+* drafts
+
+* etc.
+
+To search for a special mailbox, you can search by mailbox role, such as inbox, drafts, etc.
+
+The JMAP specification says:
+
+<blockquote>
+
+A role identifies Mailboxes that have a particular common purpose (e.g., the
+"inbox"), regardless of the "name" property (which may be localised).
+
+This value is shared with IMAP (exposed in IMAP via the SPECIAL-
+USE extension [RFC6154]).  However, unlike in IMAP, a Mailbox MUST
+only have a single role, and there MUST NOT be two Mailboxes in
+the same account with the same role.  Servers providing IMAP
+access to the same data are encouraged to enforce these extra
+restrictions in IMAP as well.  Otherwise, modifying the IMAP
+attributes to ensure compliance when exposing the data over JMAP
+is implementation dependent.
+
+The value MUST be one of the Mailbox attribute names listed in the
+IANA "IMAP Mailbox Name Attributes" registry at
+<https://www.iana.org/assignments/imap-mailbox-name-attributes/>,
+as established in [RFC8457], converted to lowercase.  New roles
+may be established here in the future.
+
+An account is not required to have Mailboxes with any particular
+roles.
+
+</blockquote>
+
+Source code:
+
+* [bin/get-mailbox-by-role](bin/get-mailbox-by-role)
+
+To get a mailbox by role, use the JMAP method call "Mailbox/query" capability then a filter with a role parameter:
+
+JMAP JSON data:
+
+```json+shell
+{
+  "using": [
+    "urn:ietf:params:jmap:core",
+    "urn:ietf:params:jmap:mail"
+  ],
+  "methodCalls": [
+    [
+      "Mailbox/query",
+      {
+       "accountId": "'"$account_id"'",
+        "filter": {
+            "role": "drafts"
+        }
+      },
+      ""
+    ]
+  ]
+}
+```
+
+Run:
+
+```sh
+curl \
+--header 'Content-Type: application/json; charset=utf-8' \
+--header 'Accept: application/json' \
+--header 'Authorization: Bearer '"$token" \
+--request POST \
+--data '
+{
+    "using": [
+        "urn:ietf:params:jmap:core",
+        "urn:ietf:params:jmap:mail"
+    ],
+    "methodCalls": [[
+        "Mailbox/query",
+        {
+            "accountId": "'"$account_id"'",
+            "filter": {
+                "role": "drafts"
+            }
+        },
+        ""
+    ]]
+}' \
+'https://api.fastmail.com/jmap/api/'
+```
+
+Example response that matches exactly one mailbox:
+
+```json
+{
+  "methodResponses": [
+    [
+      "Mailbox/query",
+      {
+        "accountId": "u0000000",
+        "ids": [
+          "b7fed054-e6c3-4a94-ae63-74c02f4142d7"
+        ],
+        "queryState": "000000",
+        "total": 3,
+        "filter": {
+          "role": "drafts"
+        },
+        "position": 0,
+        "canCalculateChanges": true
+      },
+      ""
+    ]
+  ],
+  "sessionState": "cyrus-0;p-ca43e86d48;s-6735173d254d20c1",
+  "latestClientVersion": ""
+}
+```
+
+For convenience, you can export the API token to your shell:
+
+```sh
+export drafts_mailbox_id="b7fed054-e6c3-4a94-ae63-74c02f4142d7"
+```
+
+
+## JMAP keywords
+
+The JMAP spec defines a set of mailbox keywords that are reserved:
+
+* 10.4.1.  Registration of JMAP Keyword "$draft"
+* 10.4.2.  Registration of JMAP Keyword "$seen"
+* 10.4.3.  Registration of JMAP Keyword "$flagged"
+* 10.4.4.  Registration of JMAP Keyword "$answered"
+
+To send mail, the one that is most useful is the "$draft" keyword.
+
+This is set when the user wants to treat the message as a draft the user is composing.  
+
+This is the JMAP equivalent of the IMAP \Draft flag.
+
+The "$draft" keyword is used to send email, as described in the next section.
 
 
 ## Send email using Email/set then EmailSubmission/set
@@ -575,7 +730,7 @@ curl \
                         }],
                         "subject": "'"$subject"'",
                         "mailboxIds": {
-                            "'"$mailbox_id"'": true
+                            "'"$drafts_mailbox_id"'": true
                         },
                         "keywords": {
                             "$draft": true
