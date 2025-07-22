@@ -246,7 +246,7 @@ Get your identity list by using curl with JMAP HTTP headers (explained above) an
 curl \
 --header 'Content-Type: application/json; charset=utf-8' \
 --header 'Accept: application/json' \
---header 'Authorization: Bearer $token" \
+--header 'Authorization: Bearer '"$token"'' \
 --request POST \
 --data '
 {
